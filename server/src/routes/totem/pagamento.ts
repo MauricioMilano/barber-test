@@ -9,115 +9,48 @@ const pagamentoSchema = z.object({
 });
 
 const pagamentoRoutes: FastifyPluginAsync = async (fastify) => {
-  // Process payment
   fastify.post('/pagamento', async (request, reply) => {
     try {
       const data = pagamentoSchema.parse(request.body);
-
-      // Get order
       const order = await fastify.prisma.order.findUnique({
         where: { id: data.orderId },
-        include: { client: true, items: true },
+        include: { client: true, items: true, appointment: { include: { service: true, barber: { include: { user: true } } } },
       });
 
-      if (!order) {
-        return reply.status(404).send({ error: 'Comanda não encontrada' });
-      }
+      if (!order) return reply.status(404).send({ error: 'Comanda não encontrada' });
+      if (order.paymentStatus === 'paid') return reply.status(400).send({ error: 'Pagamento já realizado' });
 
-      if (order.paymentStatus === 'paid') {
-        return reply.status(400).send({ error: 'Pagamento já realizado' });
-      }
+      const paymentResult = await processPayment({ orderId: data.orderId, amount: order.total, method: data.method });
 
-      // Process payment via Stone mock
-      const paymentResult = await processPayment({
-        orderId: data.orderId,
-        amount: order.total,
-        method: data.method,
-      });
-
-      // Update order
       const updatedOrder = await fastify.prisma.order.update({
         where: { id: data.orderId },
-        data: {
-          paymentMethod: data.method,
-          paymentStatus: paymentResult.success ? 'paid' : 'pending',
-        },
-        include: {
-          client: true,
-          items: true,
-          appointment: {
-            include: {
-              service: true,
-              barber: { include: { user: true } },
-            },
-          },
-        },
+        data: { paymentMethod: data.method, paymentStatus: paymentResult.success ? 'paid' : 'pending' },
+        include: { client: true, items: true, appointment: { include: { service: true, barber: { include: { user: true } } } },
       });
 
       if (paymentResult.success) {
-        // Broadcast SSE event
-        if (fastify.broadcast) {
-          fastify.broadcast('comanda-paga', {
-            orderId: data.orderId,
-            paymentMethod: data.method,
-          });
-        }
-
-        // Send survey via WhatsApp
+        (fastify as any).broadcast?.('comanda-paga', { orderId: data.orderId, paymentMethod: data.method });
         try {
-          await sendSurvey(
-            data.orderId,
-            updatedOrder.client.name,
-            updatedOrder.client.phone || undefined,
-            updatedOrder.client.email || undefined
-          );
-
-          // Create survey record
+          await sendSurvey(data.orderId, updatedOrder.client.name, updatedOrder.client.phone || undefined, updatedOrder.client.email || undefined);
           await fastify.prisma.survey.create({
-            data: {
-              orderId: data.orderId,
-              token: `survey_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
-              sentVia: updatedOrder.client.phone ? 'whatsapp' : 'email',
-            },
+            data: { orderId: data.orderId, token: `survey_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`, sentVia: updatedOrder.client.phone ? 'whatsapp' : 'email' },
           });
-        } catch (surveyErr) {
-          console.error('Error sending survey:', surveyErr);
-        }
+        } catch (surveyErr) { console.error('Error sending survey:', surveyErr); }
       }
 
-      return reply.send({
-        success: paymentResult.success,
-        payment: paymentResult,
-        order: updatedOrder,
-      });
+      return reply.send({ success: paymentResult.success, payment: paymentResult, order: updatedOrder });
     } catch (err) {
-      if (err instanceof z.ZodError) {
-        return reply.status(400).send({ error: 'Dados inválidos', details: err.errors });
-      }
+      if (err instanceof z.ZodError) return reply.status(400).send({ error: 'Dados inválidos', details: err.errors });
       throw err;
     }
   });
 
-  // Generate PIX QR code
   fastify.post('/pagamento/pix/generate', async (request, reply) => {
     const body = request.body as { orderId: string };
-    
-    const order = await fastify.prisma.order.findUnique({
-      where: { id: body.orderId },
-    });
-
-    if (!order) {
-      return reply.status(404).send({ error: 'Comanda não encontrada' });
-    }
-
+    const order = await fastify.prisma.order.findUnique({ where: { id: body.orderId } });
+    if (!order) return reply.status(404).send({ error: 'Comanda não encontrada' });
     const pixData = generatePIXQRCode(body.orderId, order.total);
-
-    return reply.send({
-      qrCodeData: pixData.qrCodeData,
-      qrCodeImage: pixData.qrCodeImage,
-      expiration: pixData.expiration,
-      amount: order.total,
-    });
+    return reply.send({ qrCodeData: pixData.qrCodeData, qrCodeImage: pixData.qrCodeImage, expiration: pixData.expiration, amount: order.total });
   });
 };
 

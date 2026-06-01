@@ -11,7 +11,6 @@ const createProductSchema = z.object({
 const updateProductSchema = createProductSchema.partial();
 
 const productsRoutes: FastifyPluginAsync = async (fastify) => {
-  // Get all products
   fastify.get('/', async (request, reply) => {
     const products = await fastify.prisma.product.findMany({
       include: { category: true },
@@ -20,7 +19,6 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send({ products });
   });
 
-  // Get products by category
   fastify.get('/category/:categoryId', async (request, reply) => {
     const { categoryId } = request.params as { categoryId: string };
     const products = await fastify.prisma.product.findMany({
@@ -30,65 +28,46 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send({ products });
   });
 
-  // Create product
   fastify.post('/', async (request, reply) => {
     try {
       const data = createProductSchema.parse(request.body);
       const product = await fastify.prisma.product.create({
-        data: {
-          ...data,
-          active: true,
-          stock: data.stock ?? 0,
-        },
+        data: { categoryId: data.categoryId, name: data.name, price: data.price, stock: data.stock ?? 0, active: true },
         include: { category: true },
       });
       return reply.status(201).send({ product });
     } catch (err) {
-      if (err instanceof z.ZodError) {
-        return reply.status(400).send({ error: 'Dados inválidos', details: err.errors });
-      }
+      if (err instanceof z.ZodError) return reply.status(400).send({ error: 'Dados inválidos', details: err.errors });
       throw err;
     }
   });
 
-  // Update product
   fastify.put('/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
       const data = updateProductSchema.parse(request.body);
       const product = await fastify.prisma.product.update({
         where: { id },
-        data,
+        data: { ...data },
         include: { category: true },
       });
       return reply.send({ product });
     } catch (err) {
-      if (err instanceof z.ZodError) {
-        return reply.status(400).send({ error: 'Dados inválidos', details: err.errors });
-      }
+      if (err instanceof z.ZodError) return reply.status(400).send({ error: 'Dados inválidos', details: err.errors });
       const prismaErr = err as any;
-      if (prismaErr.code === 'P2025') {
-        return reply.status(404).send({ error: 'Produto não encontrado' });
-      }
+      if (prismaErr.code === 'P2025') return reply.status(404).send({ error: 'Produto não encontrado' });
       throw err;
     }
   });
 
-  // Toggle product active
   fastify.patch('/:id/toggle', async (request, reply) => {
     const { id } = request.params as { id: string };
     const product = await fastify.prisma.product.findUnique({ where: { id } });
-    if (!product) {
-      return reply.status(404).send({ error: 'Produto não encontrado' });
-    }
-    const updated = await fastify.prisma.product.update({
-      where: { id },
-      data: { active: !product.active },
-    });
+    if (!product) return reply.status(404).send({ error: 'Produto não encontrado' });
+    const updated = await fastify.prisma.product.update({ where: { id }, data: { active: !product.active } });
     return reply.send({ product: updated });
   });
 
-  // Delete product
   fastify.delete('/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     try {
@@ -96,9 +75,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(204).send();
     } catch (err) {
       const prismaErr = err as any;
-      if (prismaErr.code === 'P2025') {
-        return reply.status(404).send({ error: 'Produto não encontrado' });
-      }
+      if (prismaErr.code === 'P2025') return reply.status(404).send({ error: 'Produto não encontrado' });
       throw err;
     }
   });
