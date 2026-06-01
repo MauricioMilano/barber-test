@@ -1,0 +1,171 @@
+// This is your Prisma schema file,
+// learn more about it in our docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Barbershop {
+  id        String   @id @default(cuid())
+  name      String
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   // "admin" | "barber"
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  barber    Barber?
+}
+
+model Barber {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  photoUrl  String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  appointments Appointment[]
+  orders    Order[]
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  cpf       String   @unique
+  name      String
+  phone     String?
+  email     String?
+  birthDate DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  appointments Appointment[]
+  orders    Order[]
+}
+
+model Service {
+  id        String   @id @default(cuid())
+  name      String
+  category  String
+  price     Float
+  duration  Int // minutos
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cortesias CortesiaRule[]
+  appointments Appointment[]
+  orderItems  OrderItem[]
+}
+
+model ProductCategory {
+  id             String   @id @default(cuid())
+  name           String
+  containsAlcohol Boolean @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  products       Product[]
+  cortesias      CortesiaRule[]
+}
+
+model Product {
+  id         String   @id @default(cuid())
+  categoryId String
+  category   ProductCategory @relation(fields: [categoryId], references: [id])
+  name       String
+  price      Float
+  stock      Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  orderItems OrderItem[]
+}
+
+model CortesiaRule {
+  id         String   @id @default(cuid())
+  serviceId  String
+  service    Service @relation(fields: [serviceId], references: [id])
+  categoryId String
+  category   ProductCategory @relation(fields: [categoryId], references: [id])
+  quantity   Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+  barberId    String
+  barber      Barber   @relation(fields: [barberId], references: [id])
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id])
+  scheduledAt DateTime
+  status      String   @default("scheduled") // "scheduled" | "in_service" | "completed" | "cancelled" | "no_show"
+  trinksId    String?
+  source      String   @default("manual") // "manual" | "trinks"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Order?
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id])
+  barberId      String?
+  barber        Barber?  @relation(fields: [barberId], references: [id])
+  appointmentId String?  @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  total         Float
+  paymentMethod String? // "credit" | "debit" | "pix" | "cash"
+  paymentStatus String   @default("pending") // "pending" | "paid" | "failed"
+  status        String   @default("open") // "open" | "in_service" | "finished" | "cancelled"
+  createdAt     DateTime @default(now())
+  finishedAt    DateTime?
+  items        OrderItem[]
+  survey       Survey?
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id])
+  itemType    String // "service" | "product"
+  itemId      String
+  name        String
+  price       Float
+  quantity    Int     @default(1)
+  isCourtesy  Boolean @default(false)
+}
+
+model Survey {
+  id          String    @id @default(cuid())
+  orderId     String    @unique
+  order       Order     @relation(fields: [orderId], references: [id])
+  token       String    @unique
+  rating      Int? // 1-5
+  comment     String?
+  sentAt      DateTime  @default(now())
+  sentVia     String // "whatsapp" | "email"
+  respondedAt DateTime?
+}
+
+model TrinksSyncLog {
+  id        String   @id @default(cuid())
+  syncedAt  DateTime @default(now())
+  count     Int
+  status    String // "success" | "error"
+  message   String?
+}
