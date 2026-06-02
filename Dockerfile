@@ -59,8 +59,8 @@ RUN npm run build
 # -----------------------------
 FROM node:22-alpine AS production
 
-# Install nginx
-RUN apk add --no-cache nginx
+# Install nginx, openssl, and libssl for Prisma
+RUN apk add --no-cache nginx openssl libssl1.1
 
 WORKDIR /app
 
