@@ -17,7 +17,6 @@ Dockerfile*
 eslint.config.*
 .prettierrc*
 .tailwind*
-postcss.config.js
 
 
 # IDE
