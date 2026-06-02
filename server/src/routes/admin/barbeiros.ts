@@ -40,7 +40,7 @@ const barbeirosRoutes: FastifyPluginAsync = async (fastify) => {
 
     // Get today's appointments count for each barber
     const barbersWithTodayCount = await Promise.all(
-      barbers.map(async (barber) => {
+      barbers.map(async (barber: typeof barbers[number]) => {
         const todayAppointments = await fastify.prisma.appointment.count({
           where: {
             barberId: barber.id,
