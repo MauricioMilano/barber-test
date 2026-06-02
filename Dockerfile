@@ -44,7 +44,6 @@ COPY server/tsconfig.json .
 COPY server/prisma ./prisma
 COPY server/src ./src
 
-ENV 
 # Build
 RUN npm run build
 
