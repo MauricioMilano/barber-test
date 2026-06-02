@@ -18,7 +18,7 @@ eslint.config.*
 .prettierrc*
 .tailwind*
 postcss.config.js
-components.json
+
 
 # IDE
 .vscode
