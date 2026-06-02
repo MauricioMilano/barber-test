@@ -22,7 +22,7 @@ COPY public/ ./public/
 COPY index.html ./
 COPY vite.config.ts ./
 COPY tailwind.config.ts ./
-COPY tsconfig*.json ./
+COPY tsconfig.json tsconfig.app.json tsconfig.node.json ./
 COPY postcss.config.js ./
 COPY components.json ./
 

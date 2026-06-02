@@ -17,8 +17,8 @@ Dockerfile*
 eslint.config.*
 .prettierrc*
 .tailwind*
-tsconfig*.json
-vite.config.*
+postcss.config.js
+components.json
 
 # IDE
 .vscode
