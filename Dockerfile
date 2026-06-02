@@ -62,15 +62,14 @@ FROM node:22-alpine AS production
 # Install nginx
 RUN apk add --no-cache nginx
 
-# Create user for running app
-RUN addgroup -g 1001 -S appgroup && adduser -u 1001 -S appuser -G appgroup
-
 WORKDIR /app
 
 # Copy backend
 COPY --from=backend-builder /app/server/dist ./dist
 COPY --from=backend-builder /app/server/node_modules ./node_modules
 COPY --from=backend-builder /app/server/package.json ./package.json
+# Copy Prisma schema for generate command
+COPY --from=backend-builder /app/server/prisma ./prisma
 # Copy frontend build
 COPY --from=frontend-builder /app/dist ./dist/public
 
@@ -128,28 +127,21 @@ COPY <<-'EOF' /start.sh
 #!/bin/sh
 set -e
 
-# Run Prisma migrations (if needed)
-# Uncomment below line if you want auto-migration on startup
-# npx prisma migrate deploy
+# Ensure nginx directories exist
+mkdir -p /var/lib/nginx/tmp/client_body /var/log/nginx
+chown -R nobody:nobody /var/lib/nginx /var/log/nginx
+
+# Generate Prisma client
+npx prisma generate --schema /app/prisma/schema.prisma
 
 # Start nginx in background
 nginx &
 
 # Start backend server
-# Run as unprivileged user
-if [ "$(id -u)" = "0" ]; then
-    exec su -s /bin/sh appuser -c "node dist/server.js"
-else
-    exec node dist/server.js
-fi
+exec node dist/server.js
 EOF
 
 RUN chmod +x /start.sh
-
-# Change ownership
-RUN chown -R appuser:appgroup /app
-
-USER appuser
 
 EXPOSE 80
 
