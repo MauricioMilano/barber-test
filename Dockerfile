@@ -10,14 +10,13 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json pnpm-lock.yaml ./
-COPY server/package.json ./server/
+# Copy root workspace files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-# Install dependencies
+# Install all workspace dependencies
 RUN corepack enable && pnpm install --frozen-lockfile
 
-# Copy source
+# Copy frontend source
 COPY . .
 
 # Build frontend
@@ -32,17 +31,21 @@ RUN pnpm build
 # -----------------------------
 FROM node:20-alpine AS backend-builder
 
-WORKDIR /app
+WORKDIR /app/server
 
-COPY server/package.json server/pnpm-lock.yaml ./
-RUN corepack enable && pnpm install --frozen-lockfile
+# Copy server package files (uses npm, not pnpm)
+COPY server/package.json server/package-lock.json ./
 
-COPY server/tsconfig.json ./server/
+# Install dependencies
+RUN npm install --frozen-lockfile
+
+# Copy server source
+COPY server/tsconfig.json .
 COPY server/prisma ./prisma
 COPY server/src ./src
 
-WORKDIR /app/server
-RUN pnpm build
+# Build
+RUN npm run build
 
 # -----------------------------
 # Stage 3: Production Container
@@ -70,7 +73,7 @@ COPY <<-'EOF' /etc/nginx/http.d/default.conf
 server {
     listen 80;
     server_name _;
-    root /app/dist/public;
+    root /app/dist;
     index index.html;
 
     # Gzip compression
