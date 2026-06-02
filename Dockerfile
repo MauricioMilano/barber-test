@@ -6,7 +6,7 @@
 # -----------------------------
 # Stage 1: Frontend Build
 # -----------------------------
-FROM node:20-alpine AS frontend-builder
+FROM node:22-alpine AS frontend-builder
 
 WORKDIR /app
 
@@ -29,7 +29,7 @@ RUN pnpm build
 # -----------------------------
 # Stage 2: Backend Build
 # -----------------------------
-FROM node:20-alpine AS backend-builder
+FROM node:22-alpine AS backend-builder
 
 WORKDIR /app/server
 
@@ -50,7 +50,7 @@ RUN npm run build
 # -----------------------------
 # Stage 3: Production Container
 # -----------------------------
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 # Install nginx and dumb-init
 RUN apk add --no-cache nginx dumb-init
