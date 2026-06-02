@@ -21,7 +21,7 @@ COPY . .
 
 # Build frontend
 # Note: VITE_API_URL must be set at build time for frontend
-ARG VITE_API_URL=http://localhost:3001
+ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
 RUN pnpm build
@@ -44,6 +44,7 @@ COPY server/tsconfig.json .
 COPY server/prisma ./prisma
 COPY server/src ./src
 
+ENV 
 # Build
 RUN npm run build
 
@@ -64,7 +65,6 @@ WORKDIR /app
 COPY --from=backend-builder /app/server/dist ./dist
 COPY --from=backend-builder /app/server/node_modules ./node_modules
 COPY --from=backend-builder /app/server/package.json ./package.json
-
 # Copy frontend build
 COPY --from=frontend-builder /app/dist ./dist/public
 
