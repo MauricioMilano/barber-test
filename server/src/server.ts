@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
+import staticFiles from '@fastify/static';
+import path from 'path';
 import prismaPlugin from './plugins/prisma.js';
 import authDecorate from './plugins/auth.js';
 import ssePlugin from './plugins/sse.js';
@@ -52,6 +54,19 @@ async function start() {
   await fastify.register(sse, { prefix: '/api/sse' });
 
   fastify.get('/api/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+
+  // Serve static frontend files
+  await fastify.register(staticFiles, {
+    root: path.join(process.cwd(), 'dist', 'public'),
+    prefix: '/',
+  });
+
+  // SPA fallback - serve index.html for non-API routes
+  fastify.get('*', async (request, reply) => {
+    if (!request.url.startsWith('/api')) {
+      return reply.sendFile('index.html');
+    }
+  });
 
   const port = parseInt(process.env.PORT || '3001');
   await fastify.listen({ port, host: '0.0.0.0' });
