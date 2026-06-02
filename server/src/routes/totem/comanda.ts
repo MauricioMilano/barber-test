@@ -1,48 +1,68 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 const createOrderSchema = z.object({
   clientId: z.string(),
   appointmentId: z.string().optional(),
   serviceId: z.string(),
-  cortesiaItems: z.array(z.object({ productId: z.string(), quantity: z.number().int().positive() })).optional(),
+  cortesiaItems: z.array(z.object({
+    productId: z.string(),
+    quantity: z.number().int().positive()
+  })).optional(),
   wantsAlcohol: z.boolean().optional(),
 });
 
-const comandaRoutes: FastifyPluginAsync = async (fastify) => {
+const comandaRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   fastify.post('/comanda', async (request, reply) => {
     try {
       const data = createOrderSchema.parse(request.body);
-      const service = await fastify.prisma.service.findUnique({ where: { id: data.serviceId } });
+      const prisma = (fastify as any).prisma;
+      const service = await prisma.service.findUnique({ where: { id: data.serviceId } });
       if (!service) return reply.status(404).send({ error: 'Serviço não encontrado' });
 
-      const items: any[] = [{
-        itemType: 'service', itemId: service.id, name: service.name,
-        price: service.price, quantity: 1, isCourtesy: false,
-      }];
+      const items = [
+        { itemType: 'service', itemId: service.id, name: service.name, price: service.price, quantity: 1, isCourtesy: false }
+      ];
 
       if (data.cortesiaItems) {
         for (const cortesia of data.cortesiaItems) {
-          const product = await fastify.prisma.product.findUnique({ where: { id: cortesia.productId } });
+          const product = await prisma.product.findUnique({ where: { id: cortesia.productId } });
           if (product) {
             items.push({ itemType: 'product', itemId: product.id, name: product.name, price: 0, quantity: cortesia.quantity, isCourtesy: true });
           }
         }
       }
 
-      const order = await fastify.prisma.order.create({
+      const order = await prisma.order.create({
         data: {
-          clientId: data.clientId, total: service.price, status: 'open', paymentStatus: 'pending',
+          clientId: data.clientId,
+          total: service.price,
+          status: 'open',
+          paymentStatus: 'pending',
           items: { create: items },
         },
-        include: { client: true, items: true, appointment: { include: { service: true, barber: { include: { user: true } } } },
+        include: {
+          client: true,
+          items: true,
+          appointment: {
+            include: { service: true, barber: { include: { user: true } } }
+          }
+        },
       });
 
       if (data.appointmentId) {
-        await fastify.prisma.appointment.update({ where: { id: data.appointmentId }, data: { status: 'in_service' } });
+        await prisma.appointment.update({
+          where: { id: data.appointmentId },
+          data: { status: 'in_service' }
+        });
       }
 
-      (fastify as any).broadcast?.('nova-comanda', { orderId: order.id, clientName: order.client.name, serviceName: service.name, total: order.total });
+      (fastify as any).broadcast?.('nova-comanda', {
+        orderId: order.id,
+        clientName: order.client.name,
+        serviceName: service.name,
+        total: order.total
+      });
 
       return reply.status(201).send({ order });
     } catch (err) {
@@ -53,9 +73,15 @@ const comandaRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.get('/comanda/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const order = await fastify.prisma.order.findUnique({
+    const prisma = (fastify as any).prisma;
+    const order = await prisma.order.findUnique({
       where: { id },
-      include: { client: true, barber: { include: { user: true } }, items: true, appointment: { include: { service: true, barber: { include: { user: true } } } },
+      include: {
+        client: true,
+        barber: { include: { user: true } },
+        items: true,
+        appointment: { include: { service: true, barber: { include: { user: true } } }
+      },
     });
     if (!order) return reply.status(404).send({ error: 'Comanda não encontrada' });
     return reply.send({ order });
@@ -64,8 +90,9 @@ const comandaRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.patch('/comanda/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const body = request.body as { status?: string; barberId?: string };
+    const prisma = (fastify as any).prisma;
 
-    const order = await fastify.prisma.order.findUnique({ where: { id } });
+    const order = await prisma.order.findUnique({ where: { id } });
     if (!order) return reply.status(404).send({ error: 'Comanda não encontrada' });
 
     const updateData: any = {};
@@ -75,10 +102,15 @@ const comandaRoutes: FastifyPluginAsync = async (fastify) => {
     }
     if (body.barberId) updateData.barberId = body.barberId;
 
-    const updated = await fastify.prisma.order.update({
+    const updated = await prisma.order.update({
       where: { id },
       data: updateData,
-      include: { client: true, barber: { include: { user: true } }, items: true, appointment: { include: { service: true, barber: { include: { user: true } } } },
+      include: {
+        client: true,
+        barber: { include: { user: true } },
+        items: true,
+        appointment: { include: { service: true, barber: { include: { user: true } } }
+      },
     });
 
     if (body.status) {
