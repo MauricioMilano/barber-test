@@ -16,8 +16,15 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 # Install all workspace dependencies
 RUN corepack enable && pnpm install --frozen-lockfile
 
-# Copy frontend source
-COPY . .
+# Copy frontend source (explicit paths to avoid symlink issues)
+COPY src/ ./src/
+COPY public/ ./public/
+COPY index.html ./
+COPY vite.config.ts ./
+COPY tailwind.config.ts ./
+COPY tsconfig*.json ./
+COPY postcss.config.js ./
+COPY components.json ./
 
 # Build frontend
 # Note: VITE_API_URL must be set at build time for frontend
