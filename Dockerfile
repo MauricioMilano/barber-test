@@ -59,8 +59,8 @@ RUN npm run build
 # -----------------------------
 FROM node:22-alpine AS production
 
-# Install nginx and dumb-init
-RUN apk add --no-cache nginx dumb-init
+# Install nginx
+RUN apk add --no-cache nginx
 
 # Create user for running app
 RUN addgroup -g 1001 -S appgroup && adduser -u 1001 -S appuser -G appgroup
@@ -136,7 +136,12 @@ set -e
 nginx &
 
 # Start backend server
-exec su-exec appuser node dist/server.js
+# Run as unprivileged user
+if [ "$(id -u)" = "0" ]; then
+    exec su -s /bin/sh appuser -c "node dist/server.js"
+else
+    exec node dist/server.js
+fi
 EOF
 
 RUN chmod +x /start.sh
