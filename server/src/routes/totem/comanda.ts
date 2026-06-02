@@ -80,7 +80,7 @@ const comandaRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         client: true,
         barber: { include: { user: true } },
         items: true,
-        appointment: { include: { service: true, barber: { include: { user: true } } }
+        appointment: { include: { service: true, barber: { include: { user: true } } } },
       },
     });
     if (!order) return reply.status(404).send({ error: 'Comanda não encontrada' });
@@ -109,7 +109,7 @@ const comandaRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         client: true,
         barber: { include: { user: true } },
         items: true,
-        appointment: { include: { service: true, barber: { include: { user: true } } }
+        appointment: { include: { service: true, barber: { include: { user: true } } } },
       },
     });
 

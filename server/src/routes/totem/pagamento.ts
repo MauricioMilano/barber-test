@@ -30,7 +30,7 @@ const pagamentoRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => 
         include: {
           client: true,
           items: true,
-          appointment: { include: { service: true, barber: { include: { user: true } } }
+          appointment: { include: { service: true, barber: { include: { user: true } } } },
         },
       });
 

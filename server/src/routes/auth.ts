@@ -38,7 +38,14 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   fastify.get('/me', {
-    preHandler: [(fastify as any).authenticate],
+    preHandler: async (request, reply) => {
+      try {
+        await request.jwtVerify();
+        (request as any).user = request.user;
+      } catch (err) {
+        reply.status(401).send({ error: 'Unauthorized' });
+      }
+    },
   }, async (request, reply) => {
     const user = await fastify.prisma.user.findUnique({
       where: { id: (request as any).user.id },

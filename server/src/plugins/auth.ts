@@ -1,7 +1,13 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, FastifyInstance } from 'fastify';
+import fp from 'fastify-plugin';
 import jwt from '@fastify/jwt';
+import { PrismaClient } from '@prisma/client';
 
 declare module 'fastify' {
+  interface FastifyInstance {
+    prisma: PrismaClient;
+    authenticate: (request: any, reply: any) => Promise<void>;
+  }
   interface FastifyRequest {
     user: {
       id: string;
@@ -29,7 +35,7 @@ declare module '@fastify/jwt' {
   }
 }
 
-const authPlugin: FastifyPluginAsync = async (fastify) => {
+const authPluginAsync: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   fastify.decorate(
     'authenticate',
     async function (request: any, reply: any) {
@@ -42,5 +48,9 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     }
   );
 };
+
+const authPlugin = fp(authPluginAsync, {
+  name: 'auth-plugin'
+});
 
 export default authPlugin;

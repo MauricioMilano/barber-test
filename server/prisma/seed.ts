@@ -3,35 +3,51 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+async function clearAllData() {
+  // Delete in order to respect foreign keys
+  await prisma.survey.deleteMany();
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.appointment.deleteMany();
+  await prisma.client.deleteMany();
+  await prisma.cortesiaRule.deleteMany();
+  await prisma.service.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.productCategory.deleteMany();
+  await prisma.barber.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.barbershop.deleteMany();
+}
+
 async function main() {
   console.log('🌱 Starting seed...');
+  
+  // Clear existing data for clean re-seed
+  console.log('🧹 Clearing existing data...');
+  await clearAllData();
+  console.log('✅ Cleared existing data');
 
-  // Create barbershop
-  const barbershop = await prisma.barbershop.create({
-    data: {
-      name: 'Barbearia STYLE',
-      logoUrl: null
-    }
-  });
-  console.log('✅ Created barbershop:', barbershop.name);
-
-  // Create admin user
+  // Create admin user (upsert to handle re-runs)
   const adminPassword = await bcrypt.hash('admin123', 10);
-  const admin = await prisma.user.create({
-    data: {
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@barbearia.com' },
+    update: {},
+    create: {
       email: 'admin@barbearia.com',
       password: adminPassword,
       name: 'Administrador',
       role: 'admin'
     }
   });
-  console.log('✅ Created admin user');
+  console.log('✅ Created/verified admin user');
 
   // Create barbers
   const barberPassword = await bcrypt.hash('barbeiro123', 10);
   
-  const joaoUser = await prisma.user.create({
-    data: {
+  const joaoUser = await prisma.user.upsert({
+    where: { email: 'joao@barbearia.com' },
+    update: {},
+    create: {
       email: 'joao@barbearia.com',
       password: barberPassword,
       name: 'João Silva',
@@ -39,8 +55,10 @@ async function main() {
     }
   });
 
-  const pedroUser = await prisma.user.create({
-    data: {
+  const pedroUser = await prisma.user.upsert({
+    where: { email: 'pedro@barbearia.com' },
+    update: {},
+    create: {
       email: 'pedro@barbearia.com',
       password: barberPassword,
       name: 'Pedro Santos',
@@ -48,20 +66,24 @@ async function main() {
     }
   });
 
-  const joao = await prisma.barber.create({
-    data: {
+  const joao = await prisma.barber.upsert({
+    where: { userId: joaoUser.id },
+    update: {},
+    create: {
       userId: joaoUser.id,
       photoUrl: null
     }
   });
 
-  const pedro = await prisma.barber.create({
-    data: {
+  const pedro = await prisma.barber.upsert({
+    where: { userId: pedroUser.id },
+    update: {},
+    create: {
       userId: pedroUser.id,
       photoUrl: null
     }
   });
-  console.log('✅ Created barbers: João, Pedro');
+  console.log('✅ Created/verified barbers: João, Pedro');
 
   // Create categories
   const bebidasAlcoolicas = await prisma.productCategory.create({
