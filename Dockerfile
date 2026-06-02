@@ -59,8 +59,11 @@ RUN npm run build
 # -----------------------------
 FROM node:22-alpine AS production
 
-# Install nginx, openssl, and libssl for Prisma
-RUN apk add --no-cache nginx openssl libssl1.1
+# Install nginx and openssl
+RUN apk add --no-cache nginx openssl
+
+# Add OpenSSL 1.1 compatibility for Prisma (Alpine 3.19+ uses OpenSSL 3.x)
+RUN apk add --no-cache libretls
 
 WORKDIR /app
 
