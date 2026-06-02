@@ -35,13 +35,17 @@ RUN pnpm build
 # -----------------------------
 # Stage 2: Production Container
 # -----------------------------
-FROM node:22-alpine AS production
+FROM node:22-bullseye-slim AS production
 
-# Install libretls for Prisma (Alpine 3.19+ uses OpenSSL 3.x)
-RUN apk add --no-cache libretls dumb-init
+# Install OpenSSL 1.1 for Prisma (Debian bullseye has libssl1.1)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    ca-certificates \
+    dumb-init \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create user for running app
-RUN addgroup -g 1001 -S appgroup && adduser -u 1001 -S appuser -G appgroup
+RUN groupadd -g 1001 -r appgroup && useradd -u 1001 -r -g appgroup appuser
 
 WORKDIR /app
 

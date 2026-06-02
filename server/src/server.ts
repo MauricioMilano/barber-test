@@ -59,10 +59,11 @@ async function start() {
   await fastify.register(staticFiles, {
     root: path.join(process.cwd(), 'dist', 'public'),
     prefix: '/',
+    index: 'index.html',
   });
 
-  // SPA fallback - serve index.html for non-API routes
-  fastify.get('*', async (request, reply) => {
+  // SPA fallback - serve index.html for non-API routes when file not found
+  fastify.setNotFoundHandler((request, reply) => {
     if (!request.url.startsWith('/api')) {
       return reply.sendFile('index.html');
     }
