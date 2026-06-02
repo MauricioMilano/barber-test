@@ -32,7 +32,7 @@ export default function Clientes() {
   const loadClients = async () => {
     try {
       const params = search ? { search } : {};
-      const response = await api.get('/admin/clientes', { params });
+      const response = await api.get('/api/admin/clientes', { params });
       setClients(response.data.clientes);
     } catch (err) {
       console.error('Error loading clients:', err);
@@ -49,7 +49,7 @@ export default function Clientes() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.post('/admin/clientes', {
+      await api.post('/api/admin/clientes', {
         cpf: formData.cpf.replace(/\D/g, ''),
         name: formData.name,
         phone: formData.phone || undefined,

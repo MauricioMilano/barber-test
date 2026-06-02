@@ -30,7 +30,7 @@ export default function Barbeiros() {
 
   const loadBarbers = async () => {
     try {
-      const response = await api.get('/admin/barbeiros');
+      const response = await api.get('/api/admin/barbeiros');
       setBarbers(response.data.barbeiros);
     } catch (err) {
       console.error('Error loading barbers:', err);
@@ -54,9 +54,9 @@ export default function Barbeiros() {
     setSaving(true);
     try {
       if (editingBarber) {
-        await api.put(`/admin/barbeiros/${editingBarber.id}`, { name: formData.name });
+        await api.put(`/api/admin/barbeiros/${editingBarber.id}`, { name: formData.name });
       } else {
-        await api.post('/admin/barbeiros', {
+        await api.post('/api/admin/barbeiros', {
           email: formData.email,
           password: formData.password,
           name: formData.name,
@@ -76,7 +76,7 @@ export default function Barbeiros() {
     if (!confirm('Deseja desativar este barbeiro?')) return;
     
     try {
-      await api.delete(`/admin/barbeiros/${id}`);
+      await api.delete(`/api/admin/barbeiros/${id}`);
       loadBarbers();
     } catch (err) {
       console.error('Error deleting barber:', err);

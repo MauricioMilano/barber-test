@@ -33,7 +33,7 @@ export default function Servicos() {
 
   const loadServices = async () => {
     try {
-      const response = await api.get('/admin/services');
+      const response = await api.get('/api/admin/services');
       setServices(response.data.services);
     } catch (err) {
       console.error('Error loading services:', err);
@@ -69,9 +69,9 @@ export default function Servicos() {
       };
 
       if (editingService) {
-        await api.put(`/admin/services/${editingService.id}`, data);
+        await api.put(`/api/admin/services/${editingService.id}`, data);
       } else {
-        await api.post('/admin/services', data);
+        await api.post('/api/admin/services', data);
       }
 
       setDialogOpen(false);
@@ -85,7 +85,7 @@ export default function Servicos() {
 
   const handleToggle = async (service: Service) => {
     try {
-      await api.patch(`/admin/services/${service.id}/toggle`);
+      await api.patch(`/api/admin/services/${service.id}/toggle`);
       loadServices();
     } catch (err) {
       console.error('Error toggling service:', err);
@@ -96,7 +96,7 @@ export default function Servicos() {
     if (!confirm('Deseja excluir este serviço?')) return;
     
     try {
-      await api.delete(`/admin/services/${id}`);
+      await api.delete(`/api/admin/services/${id}`);
       loadServices();
     } catch (err) {
       console.error('Error deleting service:', err);

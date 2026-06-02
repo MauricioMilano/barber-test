@@ -47,7 +47,7 @@ export default function Dashboard() {
 
   const loadDashboard = async () => {
     try {
-      const response = await api.get('/admin/dashboard');
+      const response = await api.get('/api/admin/dashboard');
       setData(response.data);
     } catch (err) {
       console.error('Error loading dashboard:', err);

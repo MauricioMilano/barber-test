@@ -30,7 +30,7 @@ export default function Fila() {
 
   const loadQueue = async () => {
     try {
-      const response = await api.get('/admin/agendamentos/today');
+      const response = await api.get('/api/admin/agendamentos/today');
       // Transform appointments into queue items
       const queueItems = response.data.agendamentos
         .filter((apt: any) => apt.status !== 'completed' && apt.status !== 'cancelled')
@@ -67,7 +67,7 @@ export default function Fila() {
     setCalling(item.id);
     try {
       if (item.appointmentId) {
-        await api.patch(`/admin/agendamentos/${item.appointmentId}`, {
+        await api.patch(`/api/admin/agendamentos/${item.appointmentId}`, {
           status: 'in_service',
         });
       }

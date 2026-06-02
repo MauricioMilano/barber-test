@@ -42,9 +42,9 @@ export default function Cortesias() {
   const loadData = async () => {
     try {
       const [cortesiasRes, servicesRes, categoriesRes] = await Promise.all([
-        api.get('/admin/cortesias'),
-        api.get('/admin/services'),
-        api.get('/admin/categories'),
+        api.get('/api/admin/cortesias'),
+        api.get('/api/admin/services'),
+        api.get('/api/admin/categories'),
       ]);
       setCortesias(cortesiasRes.data.cortesias);
       setServices(servicesRes.data.services);
@@ -64,7 +64,7 @@ export default function Cortesias() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.post('/admin/cortesias', {
+      await api.post('/api/admin/cortesias', {
         serviceId: formData.serviceId,
         categoryId: formData.categoryId,
         quantity: parseInt(formData.quantity),
@@ -83,7 +83,7 @@ export default function Cortesias() {
     if (!confirm('Deseja excluir esta regra?')) return;
     
     try {
-      await api.delete(`/admin/cortesias/${id}`);
+      await api.delete(`/api/admin/cortesias/${id}`);
       loadData();
     } catch (err) {
       console.error('Error deleting cortesia:', err);

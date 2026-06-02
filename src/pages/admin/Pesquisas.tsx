@@ -34,8 +34,8 @@ export default function Pesquisas() {
   const loadData = async () => {
     try {
       const [pesqRes, statsRes] = await Promise.all([
-        api.get('/admin/pesquisas', filter ? { params: { status: filter } } : {}),
-        api.get('/admin/pesquisas/stats'),
+        api.get('/api/admin/pesquisas', filter ? { params: { status: filter } } : {}),
+        api.get('/api/admin/pesquisas/stats'),
       ]);
       setPesquisas(pesqRes.data.pesquisas);
       setStats(statsRes.data);

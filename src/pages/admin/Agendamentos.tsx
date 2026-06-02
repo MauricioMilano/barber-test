@@ -43,10 +43,10 @@ export default function Agendamentos() {
   const loadData = async () => {
     try {
       const [apptRes, barbersRes, servicesRes, clientsRes] = await Promise.all([
-        api.get('/admin/agendamentos', { params: { date: currentDate.toISOString() } }),
-        api.get('/admin/barbeiros'),
-        api.get('/admin/services'),
-        api.get('/admin/clientes'),
+        api.get('/api/admin/agendamentos', { params: { date: currentDate.toISOString() } }),
+        api.get('/api/admin/barbeiros'),
+        api.get('/api/admin/services'),
+        api.get('/api/admin/clientes'),
       ]);
       setAppointments(apptRes.data.agendamentos);
       setBarbers(barbersRes.data.barbeiros);
@@ -62,7 +62,7 @@ export default function Agendamentos() {
   const handleSyncTrinks = async () => {
     setSyncing(true);
     try {
-      await api.post('/admin/trinks/sync');
+      await api.post('/api/admin/trinks/sync');
       loadData();
     } catch (err) {
       console.error('Error syncing:', err);
@@ -108,7 +108,7 @@ export default function Agendamentos() {
   const handleSave = async () => {
     try {
       const scheduledAt = new Date(`${formData.date}T${formData.time}`);
-      await api.post('/admin/agendamentos', {
+      await api.post('/api/admin/agendamentos', {
         clientId: formData.clientId,
         barberId: formData.barberId,
         serviceId: formData.serviceId,

@@ -41,8 +41,8 @@ export default function Produtos() {
   const loadData = async () => {
     try {
       const [productsRes, categoriesRes] = await Promise.all([
-        api.get('/admin/products'),
-        api.get('/admin/categories'),
+        api.get('/api/admin/products'),
+        api.get('/api/admin/categories'),
       ]);
       setProducts(productsRes.data.products);
       setCategories(categoriesRes.data.categories);
@@ -80,9 +80,9 @@ export default function Produtos() {
       };
 
       if (editingProduct) {
-        await api.put(`/admin/products/${editingProduct.id}`, data);
+        await api.put(`/api/admin/products/${editingProduct.id}`, data);
       } else {
-        await api.post('/admin/products', data);
+        await api.post('/api/admin/products', data);
       }
 
       setDialogOpen(false);
@@ -96,7 +96,7 @@ export default function Produtos() {
 
   const handleToggle = async (product: Product) => {
     try {
-      await api.patch(`/admin/products/${product.id}/toggle`);
+      await api.patch(`/api/admin/products/${product.id}/toggle`);
       loadData();
     } catch (err) {
       console.error('Error toggling product:', err);
@@ -107,7 +107,7 @@ export default function Produtos() {
     if (!confirm('Deseja excluir este produto?')) return;
     
     try {
-      await api.delete(`/admin/products/${id}`);
+      await api.delete(`/api/admin/products/${id}`);
       loadData();
     } catch (err) {
       console.error('Error deleting product:', err);

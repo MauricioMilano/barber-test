@@ -1,0 +1,40 @@
+# Dependencies
+node_modules
+server/node_modules
+
+# Build outputs
+dist
+server/dist
+
+# Development files
+.git
+*.md
+*.log
+.env*
+docker-compose*.yml
+Dockerfile*
+.eslintrc*
+eslint.config.*
+.prettierrc*
+.tailwind*
+tsconfig*.json
+vite.config.*
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+server/prisma/migrations
+server/prisma/*.db
+
+# Testing
+coverage
+*.test.*
+*.spec.*

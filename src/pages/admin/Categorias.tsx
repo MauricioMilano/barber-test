@@ -29,7 +29,7 @@ export default function Categorias() {
 
   const loadCategories = async () => {
     try {
-      const response = await api.get('/admin/categories');
+      const response = await api.get('/api/admin/categories');
       setCategories(response.data.categories);
     } catch (err) {
       console.error('Error loading categories:', err);
@@ -55,9 +55,9 @@ export default function Categorias() {
       const data = { name: formData.name, containsAlcohol: formData.containsAlcohol };
 
       if (editingCategory) {
-        await api.put(`/admin/categories/${editingCategory.id}`, data);
+        await api.put(`/api/admin/categories/${editingCategory.id}`, data);
       } else {
-        await api.post('/admin/categories', data);
+        await api.post('/api/admin/categories', data);
       }
 
       setDialogOpen(false);
@@ -73,7 +73,7 @@ export default function Categorias() {
     if (!confirm('Deseja excluir esta categoria?')) return;
     
     try {
-      await api.delete(`/admin/categories/${id}`);
+      await api.delete(`/api/admin/categories/${id}`);
       loadCategories();
     } catch (err: any) {
       alert(err.response?.data?.error || 'Erro ao excluir categoria');

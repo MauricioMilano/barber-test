@@ -24,7 +24,7 @@ export default function Relatorios() {
 
   const loadReports = async () => {
     try {
-      const response = await api.get('/admin/relatorios', { params: dateRange });
+      const response = await api.get('/api/admin/relatorios', { params: dateRange });
       setStats(response.data);
     } catch (err) {
       console.error('Error loading reports:', err);
